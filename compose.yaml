@@ -1,0 +1,129 @@
+# Comments are provided throughout this file to help you get started.
+# If you need more help, visit the Docker Compose reference guide at
+# https://docs.docker.com/go/compose-spec-reference/
+
+# Here the instructions define your application as a service called "server".
+# This service is built from the Dockerfile in the current directory.
+# You can add other services your application may depend on here, such as a
+# database or a cache. For examples, see the Awesome Compose repository:
+# https://github.com/docker/awesome-compose
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: postgresapi
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: pizza
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d pizza"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  serverdb:
+    build:
+      context: .
+      dockerfile: PizzaGrandiosa/Dockerfile
+      target: final
+    ports:
+      - 8081:8081
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8081
+    depends_on:     #Start the service redisdb before this service, as it depends on it
+      - postgres
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: rabbitmqapi
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  wpfwebapi:
+    build:
+      context: .    #use the Dockerfile in the wpfwebapi folder
+      dockerfile: WPFWebAPI/Dockerfile
+      target: final
+    ports:
+      - "5001:5001"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5001
+      - "ApiSetting:DBServerURL=http://serverdb:8081"
+      - "RabbitmqConfig__Host=rabbitmq"
+    expose:
+      - "5001"  
+    depends_on:     #Start the service dbserver before this service, as it depends on it
+      - rabbitmq
+      - serverdb
+
+  webapiserver:
+    build:
+      context: .    #use the Dockerfile in the webapi folder
+      dockerfile: PizzaWebAPI/Dockerfile
+      target: final
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+      - "ApiSetting:DBServerURL=http://serverdb:8081"
+    expose:
+      - "5000"  
+    depends_on:     #Start the service dbserver before this service, as it depends on it
+      - serverdb   
+
+  webserver:
+    build:
+      context: ./PizzaWeb    #use the Dockerfile in the PizzaWeb folder
+      dockerfile: dockerfile
+    ports:
+      - 8082:80
+    expose:
+      - "80" 
+    depends_on:     #Start the service dbserver before this service, NOT because it depends on it, just for the build sequence
+      - webapiserver  
+volumes:
+  postgres_data:
+
+# The commented out section below is an example of how to define a PostgreSQL
+# database that your application can use. `depends_on` tells Docker Compose to
+# start the database before your application. The `db-data` volume persists the
+# database data between container restarts. The `db-password` secret is used
+# to set the database password. You must create `db/password.txt` and add
+# a password of your choosing to it before running `docker compose up`.
+#     depends_on:
+#       db:
+#         condition: service_healthy
+#   db:
+#     image: postgres
+#     restart: always
+#     user: postgres
+#     secrets:
+#       - db-password
+#     volumes:
+#       - db-data:/var/lib/postgresql/data
+#     environment:
+#       - POSTGRES_DB=example
+#       - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
+#     expose:
+#       - 5432
+#     healthcheck:
+#       test: [ "CMD", "pg_isready" ]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+# volumes:
+#   db-data:
+# secrets:
+#   db-password:
+#     file: db/password.txt
+
