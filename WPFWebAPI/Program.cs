@@ -1,6 +1,7 @@
 
 namespace WPFWebAPI
 {
+    using Endpoints;
     public class Program
     {
         public static void Main(string[] args)
@@ -19,13 +20,14 @@ namespace WPFWebAPI
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+                
             }
 
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
+            app.MapOrderEndpoints();
 
-            
 
             app.Run();
         }

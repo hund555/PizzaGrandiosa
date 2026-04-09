@@ -15,9 +15,4 @@
     <ProjectReference Include="..\PizzaModels\PizzaModels.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Endpoints\" />
-    <Folder Include="Services\" />
-  </ItemGroup>
-
 </Project>
