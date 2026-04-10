@@ -38,7 +38,7 @@ namespace PizzaWebAPI.Service
         {
             using HttpClient client = _factory.CreateClient("Default");
 
-            SalesOrder? salesorder = await client.GetFromJsonAsync<SalesOrder>($"/api/salesorder/");
+            SalesOrder? salesorder = await client.GetFromJsonAsync<SalesOrder>($"/api/salesorder/{id}");
 
             return new SalesOrderDTO(salesorder);
         }
