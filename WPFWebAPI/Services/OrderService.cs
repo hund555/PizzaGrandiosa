@@ -1,37 +1,16 @@
 ﻿using PizzaModels.Models;
 
-namespace WPFWebAPI.Services
+public class OrderService : IOrderService
 {
+    public SalesOrder? CurrentOrder { get; set; }
 
-
-    public class OrderService : IOrderService
+    public void UpdateOrderStatus(int orderId, bool accepted)
     {
-        private SalesOrder? _currentOrder;
+        if (CurrentOrder == null || CurrentOrder.Id != orderId)
+            throw new Exception("Order not found");
 
-        public SalesOrder? GetCurrentOrder()
-        {
-            return _currentOrder;
-        }
-
-        public void SetCurrentOrder(SalesOrder order)
-        {
-            _currentOrder = order;
-        }
-
-        public void AcceptOrder()
-        {
-            if (_currentOrder != null)
-            {
-                _currentOrder.IsAccepted = true;
-            }
-        }
-
-        public void DeclineOrder()
-        {
-            if (_currentOrder != null)
-            {
-                _currentOrder.IsAccepted = false;
-            }
-        }
+        CurrentOrder.IsAccepted = accepted;
     }
+
+    
 }

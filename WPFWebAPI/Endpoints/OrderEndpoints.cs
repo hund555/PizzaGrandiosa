@@ -1,4 +1,6 @@
-﻿using WPFWebAPI.Services;
+﻿using WPFWebAPI.DTO;
+using WPFWebAPI.Services;
+
 
 namespace WPFWebAPI.Endpoints
 {
@@ -8,35 +10,67 @@ namespace WPFWebAPI.Endpoints
         {
             var orderApi = app.MapGroup("/api/order");
 
-
-            orderApi.MapPost("/acceptOrder", async (IOrderService orderService, RabbitSubscriber subscriber) =>
+            orderApi.MapPost("/updateStatus", async (
+                UpdateOrderStatusDTO dto,
+                OrderService orderService,
+                SseConnectionManager manager) =>
             {
-                var order = orderService.GetCurrentOrder();
+                try
+                {
+                    // 1. Opdater via service
+                    orderService.UpdateOrderStatus(dto.OrderId, dto.Accepted);
 
-                if (order == null)
-                    return Results.NotFound("No order");
+                    // 2. Lav payload
+                    var payload = System.Text.Json.JsonSerializer.Serialize(new
+                    {
+                        orderId = dto.OrderId,
+                        accepted = dto.Accepted
+                    });
 
-                orderService.AcceptOrder();
+                    // 3. Send til ALLE SSE clients
+                    foreach (var client in manager.GetAll())
+                    {
+                        try
+                        {
+                            await client.WriteAsync($"data: {payload}\n\n");
+                            await client.Body.FlushAsync();
+                        }
+                        catch
+                        {
+                            // ignore dead clients
+                        }
+                    }
 
-                await subscriber.RespondAsync(order.Id, true);
-
-                return Results.Ok(order);
+                    return Results.Ok(orderService.CurrentOrder);
+                }
+                catch
+                {
+                    return Results.NotFound("Order not found");
+                }
             });
 
-            orderApi.MapPost("/declineOrder", async (IOrderService orderService, RabbitSubscriber subscriber) =>
+            app.MapGet("/api/order/stream", async (
+                HttpContext context,
+                SseConnectionManager manager) =>
             {
-                var order = orderService.GetCurrentOrder();
+                context.Response.Headers.Add("Content-Type", "text/event-stream");
+                context.Response.Headers.Add("Cache-Control", "no-cache");
+                context.Response.Headers.Add("Connection", "keep-alive");
 
-                if (order == null)
-                    return Results.NotFound("No order");
+                var id = manager.Add(context.Response);
 
-                orderService.DeclineOrder();
-
-                await subscriber.RespondAsync(order.Id, false);
-
-                return Results.Ok(order);
+                try
+                {
+                    while (!context.RequestAborted.IsCancellationRequested)
+                    {
+                        await Task.Delay(1000);
+                    }
+                }
+                finally
+                {
+                    manager.Remove(id);
+                }
             });
-
             return app;
         }
     }

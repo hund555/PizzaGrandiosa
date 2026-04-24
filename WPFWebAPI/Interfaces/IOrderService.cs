@@ -2,8 +2,6 @@
 
 public interface IOrderService
 {
-    SalesOrder? GetCurrentOrder();
-    void SetCurrentOrder(SalesOrder order);
-    void AcceptOrder();
-    void DeclineOrder();
+    SalesOrder? CurrentOrder { get; set; }
+    void UpdateOrderStatus(int orderId, bool accepted);
 }
