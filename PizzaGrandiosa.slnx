@@ -1,7 +1,7 @@
 <Solution>
   <Project Path="PizzaGrandiosa/PizzaGrandiosa.csproj" />
   <Project Path="PizzaModels/PizzaModels.csproj" Id="81d9ba3c-009e-4191-964d-05d8cadc8515" />
-  <Project Path="pizzaweb/" Type="Website" DisplayName="pizzaweb">
+  <Project Path="pizzaweb/" Type="Website" DisplayName="PizzaWeb">
     <BuildType Project="Debug" />
     <Properties Name="WebsiteProperties">
       <Property Name="Debug.AspNetCompiler.Debug" Value="&quot;True&quot;" />
@@ -23,5 +23,6 @@
     </Properties>
   </Project>
   <Project Path="PizzaWebAPI/PizzaWebAPI.csproj" Id="087f2aa0-fbd0-44a2-9922-3ae80a4ecd3b" />
+  <Project Path="PizzaWPF/PizzaWPF.csproj" />
   <Project Path="WPFWebAPI/WPFWebAPI.csproj" Id="7504e3b0-6741-4ba9-a6a4-a6ead3e6bf38" />
 </Solution>
