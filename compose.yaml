@@ -59,6 +59,7 @@ services:
       - ASPNETCORE_URLS=http://+:5001
       - "ApiSetting:DBServerURL=http://serverdb:8081"
       - "RabbitmqConfig__Host=rabbitmq"
+      - "RabbitmqConfig__QueueName=orders"
     expose:
       - "5001"  
     depends_on:     #Start the service dbserver before this service, as it depends on it
