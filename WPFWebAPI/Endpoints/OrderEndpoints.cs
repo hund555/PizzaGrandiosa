@@ -17,17 +17,17 @@ namespace WPFWebAPI.Endpoints
             {
                 try
                 {
-                    // 1. Opdater via service
+                    //Opdater via service
                     orderService.UpdateOrderStatus(dto.OrderId, dto.Accepted);
 
-                    // 2. Lav payload
+                    //Lav payload
                     var payload = System.Text.Json.JsonSerializer.Serialize(new
                     {
                         orderId = dto.OrderId,
                         accepted = dto.Accepted
                     });
 
-                    // 3. Send til ALLE SSE clients
+                    //Send til SSE client
                     foreach (var client in manager.GetAll())
                     {
                         try
@@ -37,7 +37,7 @@ namespace WPFWebAPI.Endpoints
                         }
                         catch
                         {
-                            // ignore dead clients
+
                         }
                     }
 
@@ -53,9 +53,10 @@ namespace WPFWebAPI.Endpoints
                 HttpContext context,
                 SseConnectionManager manager) =>
             {
-                context.Response.Headers.Add("Content-Type", "text/event-stream");
-                context.Response.Headers.Add("Cache-Control", "no-cache");
-                context.Response.Headers.Add("Connection", "keep-alive");
+              
+                context.Response.Headers.Append("Content-Type", "text/event-stream");
+                context.Response.Headers.Append("Cache-Control", "no-cache");
+                context.Response.Headers.Append("Connection", "keep-alive");
 
                 var id = manager.Add(context.Response);
 
