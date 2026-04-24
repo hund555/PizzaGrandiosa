@@ -1,5 +1,7 @@
+using PizzaModels.Models;
 using System.Collections.Concurrent;
 using System.Text.Json;
+
 
 namespace WPFWebAPI.Services
 {
@@ -8,10 +10,12 @@ namespace WPFWebAPI.Services
     {
         private readonly ConcurrentDictionary<int, DateTime> _pending = new();
         private readonly IHttpClientFactory _factory;
+        private readonly IOrderService _orderService;
 
-        public RabbitSubscriber(IHttpClientFactory factory, IConfiguration config)
+        public RabbitSubscriber(IHttpClientFactory factory, IConfiguration config, IOrderService orderService)
         {
             _factory = factory;
+            _orderService = orderService;
         }
 
         public void Subscribe()
@@ -34,6 +38,32 @@ namespace WPFWebAPI.Services
         {
             _pending[orderId] = DateTime.UtcNow;
             Console.WriteLine($"Order {orderId} added to pending (in-memory)");
+        }
+
+        public void HandleIncomingOrder(string json)
+        {
+            try
+            {
+                var order = JsonSerializer.Deserialize<SalesOrder>(json);
+
+                if (order == null)
+                {
+                    Console.WriteLine("Failed to deserialize order");
+                    return;
+                }
+
+               
+                _orderService.SetCurrentOrder(order);
+
+                
+                _pending[order.Id] = DateTime.UtcNow;
+
+                Console.WriteLine($"Order {order.Id} received from MQ and stored");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error processing order: {ex.Message}");
+            }
         }
 
         public async Task<bool> RespondAsync(int orderId, bool accepted)

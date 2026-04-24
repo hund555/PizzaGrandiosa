@@ -8,8 +8,8 @@ namespace WPFWebAPI.Endpoints
         {
             var orderApi = app.MapGroup("/api/order");
 
-           
-            orderApi.MapPost("/acceptOrder", (IOrderService orderService) =>
+
+            orderApi.MapPost("/acceptOrder", async (IOrderService orderService, RabbitSubscriber subscriber) =>
             {
                 var order = orderService.GetCurrentOrder();
 
@@ -18,10 +18,12 @@ namespace WPFWebAPI.Endpoints
 
                 orderService.AcceptOrder();
 
+                await subscriber.RespondAsync(order.Id, true);
+
                 return Results.Ok(order);
             });
 
-            orderApi.MapPost("/declineOrder", (IOrderService orderService) =>
+            orderApi.MapPost("/declineOrder", async (IOrderService orderService, RabbitSubscriber subscriber) =>
             {
                 var order = orderService.GetCurrentOrder();
 
@@ -29,6 +31,8 @@ namespace WPFWebAPI.Endpoints
                     return Results.NotFound("No order");
 
                 orderService.DeclineOrder();
+
+                await subscriber.RespondAsync(order.Id, false);
 
                 return Results.Ok(order);
             });
