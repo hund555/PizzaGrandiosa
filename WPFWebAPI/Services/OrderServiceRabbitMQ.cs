@@ -8,7 +8,6 @@ namespace WPFWebAPI.Services
 {
     public class OrderServiceRabbitMQ : IOrderServiceRabbitMQ
     {
-        private readonly IHttpClientFactory _factory;
         private readonly RabbitMQConfigOption _config;
         private IConnection _connection;
         private IChannel _channel;
