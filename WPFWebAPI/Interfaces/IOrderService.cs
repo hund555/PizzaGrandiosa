@@ -1,9 +1,9 @@
 ﻿using PizzaModels.Models;
 
-namespace WPFWebAPI.Interfaces
+public interface IOrderService
 {
-    public interface IOrderService
-    {
-       SalesOrder? CurrentOrder { get; set; }
-    }
+    SalesOrder? GetCurrentOrder();
+    void SetCurrentOrder(SalesOrder order);
+    void AcceptOrder();
+    void DeclineOrder();
 }

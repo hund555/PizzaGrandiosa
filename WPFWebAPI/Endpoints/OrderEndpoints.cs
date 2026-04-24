@@ -1,6 +1,4 @@
-﻿using PizzaModels.Models;
-using WPFWebAPI.Interfaces;
-using WPFWebAPI.Services;
+﻿using WPFWebAPI.Services;
 
 namespace WPFWebAPI.Endpoints
 {
@@ -10,26 +8,29 @@ namespace WPFWebAPI.Endpoints
         {
             var orderApi = app.MapGroup("/api/order");
 
-            
+           
             orderApi.MapPost("/acceptOrder", (IOrderService orderService) =>
             {
-                if (orderService.CurrentOrder == null)
-                    return Results.NotFound("No order available");
+                var order = orderService.GetCurrentOrder();
 
-                orderService.CurrentOrder.IsAccepted = true;
+                if (order == null)
+                    return Results.NotFound("No order");
 
-                return Results.Ok(orderService.CurrentOrder);
+                orderService.AcceptOrder();
+
+                return Results.Ok(order);
             });
 
-            
             orderApi.MapPost("/declineOrder", (IOrderService orderService) =>
             {
-                if (orderService.CurrentOrder == null)
-                    return Results.NotFound("No order available");
+                var order = orderService.GetCurrentOrder();
 
-                orderService.CurrentOrder.IsAccepted = false;
+                if (order == null)
+                    return Results.NotFound("No order");
 
-                return Results.Ok(orderService.CurrentOrder);
+                orderService.DeclineOrder();
+
+                return Results.Ok(order);
             });
 
             return app;

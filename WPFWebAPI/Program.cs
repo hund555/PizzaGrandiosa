@@ -2,6 +2,8 @@
 namespace WPFWebAPI
 {
     using Endpoints;
+    using WPFWebAPI.Services;
+
     public class Program
     {
         public static void Main(string[] args)
@@ -10,6 +12,7 @@ namespace WPFWebAPI
 
             // Add services to the container.
             builder.Services.AddAuthorization();
+            builder.Services.AddSingleton<IOrderService, OrderService>();
 
             // Http client used to call back the main API when responding to orders
             builder.Services.AddHttpClient("Api", client => {
