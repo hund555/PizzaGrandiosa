@@ -4,6 +4,8 @@ using PizzaModels.Models;
 
 namespace PizzaGrandiosa.Endpoints
 {
+    public record ResponseDto(int OrderId, bool Accepted);
+
     public static class SalesOrderEndpoints
     {
         public static void MapSalesOrderEndpoints(this IEndpointRouteBuilder routes)
@@ -26,23 +28,27 @@ namespace PizzaGrandiosa.Endpoints
                 return TypedResults.Ok(salesOrder);
             });
 
-
-
-
-            salesOrderApi.MapPost("/", async (SalesOrder salesOrder, ISalesOrderRepository repo) => {
-
-                //salesOrder = new SalesOrder { 
-                //    Price = 99,
-                //    CustomerId = 1,
-                //    Date = DateTime.Now,
-                //};
-
+            salesOrderApi.MapPost("/", async (SalesOrder salesOrder, ISalesOrderRepository repo) =>
+            {
                 Console.WriteLine($"Post SalesOrder invoked");
-                //var newSalesOrder = salesOrder;
                 SalesOrder? newSalesOrder = await repo.Add(salesOrder);
                 return TypedResults.Created($"/api/customer/{newSalesOrder?.Id}", newSalesOrder);
             });
 
+            // Endpoint to receive accept/decline responses from subscriber apps
+            salesOrderApi.MapPost("/response", HandleResponse);
+        }
+
+        private static async Task<IResult> HandleResponse(ResponseDto dto, ISalesOrderRepository repo)
+        {
+            if (dto == null) return TypedResults.BadRequest();
+
+            Console.WriteLine($"Received response for order {dto.OrderId} accepted={dto.Accepted}");
+
+            var order = await repo.Get(dto.OrderId);
+            if (order == null) return TypedResults.NotFound(dto.OrderId);
+
+            return TypedResults.Ok(new { dto.OrderId, dto.Accepted });
         }
     }
 }
