@@ -2,13 +2,7 @@
 
 namespace WPFWebAPI.Services
 {
-    public interface IOrderService
-    {
-        SalesOrder? GetCurrentOrder();
-        void SetCurrentOrder(SalesOrder order);
-        void AcceptOrder();
-        void DeclineOrder();
-    }
+
 
     public class OrderService : IOrderService
     {
