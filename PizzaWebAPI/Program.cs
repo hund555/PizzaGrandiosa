@@ -43,6 +43,13 @@ namespace PizzaWebAPI
                         client.BaseAddress = new Uri(builder.Configuration["ApiSetting:DBServerURL"]);
                     });
 
+            builder.Services.AddHttpClient(
+                "wpfapi",
+                client =>
+                {
+                    client.BaseAddress = new Uri(builder.Configuration["ApiSetting:WPFAPI"]);
+                });
+
             builder.Services.AddScoped<IWebServiceUser, WebServiceUser>();
             builder.Services.AddScoped<IWebServiceProduct, WebServiceProduct>();
             builder.Services.AddScoped<IWebServiceCustomer, WebServiceCustomer>();
