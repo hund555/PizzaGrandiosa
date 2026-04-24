@@ -1,5 +1,6 @@
 ﻿using WPFWebAPI.DTO;
 using WPFWebAPI.Services;
+using WPFWebAPI.Services.Service_Interfaces;
 
 
 namespace WPFWebAPI.Endpoints
@@ -46,6 +47,19 @@ namespace WPFWebAPI.Endpoints
                 catch
                 {
                     return Results.NotFound("Order not found");
+                }
+            });
+
+            app.MapPost("/createdorder", async (int id, IOrderServiceRabbitMQ orderService) =>
+            {
+                try
+                {
+                    await orderService.RecievedOrderID(id);
+                    return Results.Created();
+                }
+                catch (Exception e)
+                {
+                    return Results.Problem(detail: e.Message);
                 }
             });
 

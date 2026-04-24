@@ -77,6 +77,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5000
       - "ApiSetting:DBServerURL=http://serverdb:8081"
+      - "ApiSetting:WPFAPI=http://wpfwebapi:5001"
     expose:
       - "5000"  
     depends_on:     #Start the service dbserver before this service, as it depends on it

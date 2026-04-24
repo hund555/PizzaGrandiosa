@@ -31,6 +31,9 @@ namespace PizzaWebAPI.Service
 
             var newSalesOrder = await salesorderResponse.Content.ReadFromJsonAsync<SalesOrder>();
 
+            using HttpClient client2 = _factory.CreateClient("wpfapi");
+            await client2.PostAsJsonAsync("/api/order/createdorder", new { id = newSalesOrder.Id });
+
             return new SalesOrderDTO(newSalesOrder);
         }
 
