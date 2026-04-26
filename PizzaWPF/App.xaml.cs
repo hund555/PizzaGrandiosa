@@ -6,6 +6,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using PizzaWPF.Services;
 using PizzaWPF.ViewModels;
+using Microsoft.Extensions.Http;
+using System.Net.Http;
 
 namespace PizzaWPF
 {
@@ -13,7 +15,7 @@ namespace PizzaWPF
     {
         private IHost? _host;
 
-        protected override void OnStartup(StartupEventArgs e)
+        protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
@@ -24,35 +26,61 @@ namespace PizzaWPF
                 })
                 .ConfigureServices((context, services) =>
                 {
+                    // Normalize configured API base so relative paths combine correctly
+                    var apiBase = context.Configuration.GetSection("Api")["BaseUrl"] ?? "https://localhost:5001/";
+                    if (!apiBase.EndsWith("/")) apiBase += "/";
+
                     services.AddHttpClient<IApiClient, ApiClient>(client =>
                     {
-                        var apiBase = context.Configuration.GetSection("Api")["BaseUrl"];
-                        client.BaseAddress = new Uri(apiBase ?? "https://localhost:5001/");
+                        client.BaseAddress = new Uri(apiBase);
                     });
 
-                    services.AddSingleton<IRabbitMqListener, RabbitMqListener>();
                     services.AddSingleton<MainWindowViewModel>();
+                    services.AddSingleton<IRabbitMqListener, RabbitMqListener>();
                     services.AddSingleton<MainWindow>();
                     services.AddLogging(configure => configure.AddConsole());
                 })
                 .Build();
 
-            _host.Start();
+            try
+            {
+                // Start host and listener in an awaited manner so startup failures are observable
+                await _host.StartAsync();
 
-            // Start RabbitMQ listener after DI is configured
-            var listener = _host.Services.GetRequiredService<IRabbitMqListener>();
-            listener.StartListeningAsync();
+                var listener = _host.Services.GetRequiredService<IRabbitMqListener>();
+                await listener.StartListeningAsync();
 
-            var mainWindow = _host.Services.GetRequiredService<MainWindow>();
-            mainWindow.Show();
+                var mainWindow = _host.Services.GetRequiredService<MainWindow>();
+                mainWindow.Show();
+            }
+            catch (Exception ex)
+            {
+                // Log and show a friendly message then exit
+                var logger = _host.Services.GetService<ILogger<App>>();
+                logger?.LogError(ex, "Application failed to start");
+                MessageBox.Show("Application failed to start. Check logs for details.", "Startup error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Shutdown();
+            }
         }
 
         protected override async void OnExit(ExitEventArgs e)
         {
             if (_host is not null)
             {
-                await _host.StopAsync(TimeSpan.FromSeconds(5));
-                _host.Dispose();
+                try
+                {
+                    // Stop the RabbitMQ listener if it exposes StopAsync
+                    var listener = _host.Services.GetService<IRabbitMqListener>();
+                    if (listener != null)
+                        await listener.StopAsync();
+
+                    await _host.StopAsync(TimeSpan.FromSeconds(5));
+                }
+                catch { }
+                finally
+                {
+                    _host.Dispose();
+                }
             }
 
             base.OnExit(e);
