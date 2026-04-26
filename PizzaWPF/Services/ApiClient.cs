@@ -34,7 +34,9 @@ namespace PizzaWPF.Services
             {
                 var payload = new { OrderId = orderId };
                 var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-                var response = await _http.PostAsync($"/orders/{action}", content);
+
+                // Use a relative path (no leading slash) so BaseAddress + relative path combine predictably.
+                var response = await _http.PostAsync($"orders/{action}", content);
                 if (!response.IsSuccessStatusCode)
                 {
                     _logger.LogWarning("API returned {StatusCode} for {Action} {OrderId}", response.StatusCode, action, orderId);
